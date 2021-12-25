@@ -14,6 +14,7 @@ fi
 
 # remove PID and /tmp $SCRIPT_NAME.png on exit
 trap 'rm -f /tmp/$SCRIPT_NAME.pid /tmp/$SCRIPT_NAME.png /tmp/$SCRIPT_NAME.compare.png' EXIT
+trap 'rm -f /tmp/$SCRIPT_NAME.pid' INT
 
 # if --help or -h is given, print help
 if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then

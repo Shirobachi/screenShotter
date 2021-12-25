@@ -26,9 +26,7 @@ $1 and $2 are optional where:
 - $2 - minimal difference between screenshots
 
 ### close
-Remove PID file from `/tmp/screenShotter.sh`
-
-! Simple killing script will not make tar file, so please follow above method
+Use INT signal to close script (CTRL+C) or delete PID file from `/tmp/screenShotter.sh` (if you run in background it could be useful)
 
 
 ## Contributing
