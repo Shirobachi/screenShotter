@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 # get script filename without extension
 SCRIPT_NAME=$(basename "$0" | cut -d. -f1)
 
@@ -23,36 +21,37 @@ if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
 	echo "$0 -h, --help: Print this help"
 	echo "$0 -x: debug mode on"
 	echo "$0 3: Set delay to 2 seconds"
-	echo "$0 3 0.15: Set delay to 2 seconds and set minimal difference to 15%"
+	echo "$0 3 0.15: Set delay to 2 seconds and compression to 15%"
 	echo
 	echo Thank you for using screemshotter.sh by @shirobachi
 	exit 0
 fi
 
 # set -x if flag is set
-if [ "$1" = "-x" ]; then
+if [ "$1" = "-x" ] || [ "$3" == "-x" ]; then
 	set -x
 else
-	# check if is 1 argument
+	# check if is 1 empty
 	if [ "$1" = "" ]; then
-		sleeper=1
+		border=0.11
 	else
-		sleeper=$1
+		border=$1
 	fi
 
-	# check if is 2 empty
+	# check if is 2 argument
 	if [ "$2" = "" ]; then
-		border="0.11"
+		sleeper=1
 	else
-		border="$2"
+		sleeper=$2
 	fi
+
 fi
 
 # let show notifcation from bg
 export DISPLAY=:0.0
 
 # check if magick installed
-if [ ! "$(command -v magick)" ]; then
+if [ ! $(which magick) ]; then
 	# Get place to save magick
 	path=$(echo "$PATH" | tr ":" "\n" | head -1)
 	
@@ -72,9 +71,6 @@ date=$(date +%Y-%m-%d_%H-%M-%S)
 mkdir -p "$HOME/Downloads/$date/logs"
 mkdir -p "$HOME/Downloads/$date/screenshots"
 
-# wait 5 seconds
-sleep 5
-
 while true; do
 
 	# kill notifcation during screenshot
@@ -85,7 +81,7 @@ while true; do
 	ssPath="$HOME/Downloads/$date/screenshots/$ssFilename.png"
 
 	# make full screen screenshot
-	magick import -window root "$ssPath"
+	magick import -window root $ssPath
 	sleep .5
 
 	# check if have ss to compare
@@ -93,12 +89,12 @@ while true; do
 		# compare ss
 		diff=$(magick compare -metric RMSE -subimage-search "$ssPath" "/tmp/$SCRIPT_NAME.png" "/tmp/$SCRIPT_NAME.compare.png" 2>&1)
 
-		par1=$(echo "$diff" | cut -d' ' -f1)
-		par2=$(echo "$diff" | cut -d'(' -f2 | cut -d')' -f1)
-		par3=$(echo "$diff" | cut -d' ' -f4)
+		par1=$(echo $diff | cut -d' ' -f1)
+		par2=$(echo $diff | cut -d'(' -f2 | cut -d')' -f1)
+		par3=$(echo $diff | cut -d' ' -f4)
 
 		# if diff is more than 0.11
-		if [ "$(echo "$par2 > $border" | bc)" -eq 1 ]; then
+		if [ $(echo "$par2 > $border" | bc) -eq 1 ]; then
 			same=true
 		else
 			same=false
@@ -107,10 +103,10 @@ while true; do
 		# cp and overwrite ss
 		cp "$ssPath" "/tmp/$SCRIPT_NAME.png"
 
-		mv "/tmp/$SCRIPT_NAME.compare.png" "$HOME/Downloads/$date/logs/$ssFilename:$same:$par1:$par2:$par3.png"
+		mv "/tmp/$SCRIPT_NAME.compare.png" $HOME/Downloads/$date/logs/$ssFilename:$same:$par1:$par2:$par3.png
 	else # if it's very 1st ss
 		# mv file to compare destination
-		cp "$ssPath" "/tmp/$SCRIPT_NAME.png"
+		cp "$ssPath" /tmp/$SCRIPT_NAME.png
 	fi
 
 	# check if pid file exists
@@ -120,26 +116,18 @@ while true; do
 		break 
 	fi
 
-	sleep "$sleeper"
+	sleep $sleeper
 done
 
 # make dir for different screenshots
-mkdir "$HOME/Downloads/$date/tar"
+mkdir $HOME/Downloads/$date/tar
 
 # mv the very first ss
-# find the first ss
-latest=$(find "$HOME/Downloads/$date/screenshots" -type f -printf "%T@ %p\n" | sort -n | cut -d' ' -f2- | head -1)
+latest=$(ls -tp $HOME/Downloads/$date/screenshots | grep -v / | tail -1)
+cp $HOME/Downloads/$date/screenshots/$latest $HOME/Downloads/$date/tar
 
-cp "$latest" "$HOME/Downloads/$date/tar"
-
-# find all logs with true
-loops=$(find "$HOME/Downloads/$date/logs" -type f -name "*true*")
-for i in $loops; do
-	file=$(basename "$i" | cut -d':' -f1).png
-	cp "$HOME/Downloads/$date/screenshots/$file" "$HOME/Downloads/$date/tar"
-
-	# cp "$i" "$HOME/Downloads/$date/tar"
-done
+# mv rest different sses
+ls "$HOME/Downloads/$date/logs" | grep true | cut -d : -f1 | xargs -I {} cp "$HOME/Downloads/$date/screenshots/{}.png" "$HOME/Downloads/$date/tar"
 
 # make tar
 cd "$HOME/Downloads/$date/tar" || exit
