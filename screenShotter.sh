@@ -90,21 +90,24 @@ while true; do
 		# compare ss
 		diff=$(magick compare -metric RMSE -subimage-search "$ssPath" "/tmp/$SCRIPT_NAME.png" "/tmp/$SCRIPT_NAME.compare.png" 2>&1)
 
-		par1=$(echo $diff | cut -d' ' -f1)
-		par2=$(echo $diff | cut -d'(' -f2 | cut -d')' -f1)
-		par3=$(echo $diff | cut -d' ' -f4)
+		# if last command success
+		if [ $? -eq 0 ]; then
+			par1=$(echo $diff | cut -d' ' -f1)
+			par2=$(echo $diff | cut -d'(' -f2 | cut -d')' -f1)
+			par3=$(echo $diff | cut -d' ' -f4)
 
-		# if diff is more than 0.11
-		if [ $(echo "$par2 > $border" | bc) -eq 1 ]; then
-			same=true
-		else
-			same=false
+			# if diff is more than 0.11
+			if [ $(echo "$par2 > $border" | bc) -eq 1 ]; then
+				same=true
+			else
+				same=false
+			fi
+
+			# cp and overwrite ss
+			cp "$ssPath" "/tmp/$SCRIPT_NAME.png"
+
+			mv "/tmp/$SCRIPT_NAME.compare.png" $HOME/Downloads/$date/logs/$ssFilename:$same:$par1:$par2:$par3.png
 		fi
-
-		# cp and overwrite ss
-		cp "$ssPath" "/tmp/$SCRIPT_NAME.png"
-
-		mv "/tmp/$SCRIPT_NAME.compare.png" $HOME/Downloads/$date/logs/$ssFilename:$same:$par1:$par2:$par3.png
 	else # if it's very 1st ss
 		# mv file to compare destination
 		cp "$ssPath" /tmp/$SCRIPT_NAME.png
