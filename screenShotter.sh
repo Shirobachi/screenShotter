@@ -91,10 +91,10 @@ while true; do
 		diff=$(magick compare -metric RMSE -subimage-search "$ssPath" "/tmp/$SCRIPT_NAME.png" "/tmp/$SCRIPT_NAME.compare.png" 2>&1)
 
 		# if last command success
-		if [ $? -eq 0 ]; then
 			par1=$(echo $diff | cut -d' ' -f1)
 			par2=$(echo $diff | cut -d'(' -f2 | cut -d')' -f1)
 			par3=$(echo $diff | cut -d' ' -f4)
+		if [ $? -eq 0 ]; then
 
 			# if diff is more than 0.11
 			if [ $(echo "$par2 > $border" | bc) -eq 1 ]; then
